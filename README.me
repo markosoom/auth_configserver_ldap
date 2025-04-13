@@ -1,0 +1,128 @@
+# Containerssh auth_configserver_ldap
+
+[https://containerssh.io/](https://containerssh.io/)
+```
+ContainerSSH saab käivitab Kuberneteses, Podmanis või Dockeris, kus iga SSH-ühenduse jaoks tehakse uue konteiner. Kasutaja lükatakse läbipaistvalt konteinerisse ja konteiner eemaldatakse, kui kasutaja ühenduse katkestab. Autentimine ja konteineri konfigureerimine on veebihaagide abil dünaamilised ja süsteemseid kasutajaid pole vaja.
+Antud näites on implemeteeritud auth serverile openldap tugi kuhu saab sisse logida nii parooli kui ka avaliku võtmega. Lisaks on võimalik igale kasutajale config serveri abil seadistada temale omane konteiner (ubuntu, alpine jne)
+```
+## 1. LDAP Turvalisus:
+See näide kasutab lihtsat bindi parooliga autentimiseks ja võib vajada service-konto bindi kasutaja atribuutide (nagu avaliku võtme) otsimiseks, kui anonüümne otsing pole lubatud. Ära kasuta seda koodi tootmises ilma TLS/StartTLS-i ja korraliku vigade käsitlemiseta ning turvalisema konfiguratsioonihalduseta! InsecureSkipVerify on näites lubatud testimise lihtsustamiseks, tootmises peab see olema false.
+
+## 2. LDAP Struktuur:
+Kood eeldab teatud LDAP struktuuri (nt kasutaja leidmiseks uid=username, avaliku võtme jaoks sshPublicKey atribuut).
+LDAP_USER_DN_TEMPLATE ja LDAP_SEARCH_FILTER_TEMPLATE vastavalt oma LDAP skeemile.
+## 3. Dünaamiline võti configserveris:
+Avaliku võtme lisamine konteinerisse /config sammus pärast autentimist on mõnevõrra ebatavaline muster ContainerSSH jaoks. Tavaliselt tegeleb võtmetega kas autentimise samm (kui see on vajalik juurdepääsuks) või konteineri enda sisemine loogika (nt käivitamisskript, mis laeb võtmed). Siinne lahendus muudab konteineri käivitamiskäsku, et see lisaks võtme authorized_keys faili. See töötab, kuid võib olla habras.
+
+## 4. Konfiguratsioon:
+Kood kasutab keskkonnamuutujaid konfiguratsiooni jaoks.
+
+## Kuidas kasutada:
+
+### 1. Salvesta kood:
+Salvesta repos olev kood faili main.go. (juba olemas)
+### 2. Initsialiseeri moodul:
+Kui pole veel tehtud:
+```
+go mod init auth_configserver_ldap
+```
+ja seejärel
+```
+go mod tidy
+```
+### 3. Seadista keskkonnamuutujad:
+Määra vajalikud LDAP_* ja CONFIG_* muutujad vastavalt oma keskkonnale. 
+Näiteks: env
+
+```bash
+export LISTEN_ADDR=":8888"
+export LDAP_HOST="your-ldap-server.com"
+export LDAP_PORT="636"
+export LDAP_USE_TLS="true"
+export LDAP_SKIP_TLS_VERIFY="true" # AINULT TESTIMISEKS!
+export LDAP_BASE_DN="dc=yourdomain,dc=com"
+export LDAP_USER_DN_TEMPLATE="uid=%s,ou=users,dc=yourdomain,dc=com"
+export LDAP_SEARCH_FILTER_TEMPLATE="(uid=%s)"
+export LDAP_SSH_PUBLIC_KEY_ATTR="sshPublicKey"
+export LDAP_BIND_DN="cn=readonly,dc=yourdomain,dc=com" # Kui vaja service kontot
+export LDAP_BIND_PASSWORD="service_password"          # Kui vaja service kontot
+export CONFIG_KEY_PATH_BASE="/etc/containerssh/userkeys" # Kaust, kus asuvad nt kasutaja.pub failid
+export CONFIG_KEY_FILENAME_TEMPLATE="%s.pub"
+export DEFAULT_DOCKER_IMAGE="ubuntu:latest" # Või muu soovitud image
+export DEFAULT_SHELL_COMMAND="/bin/bash"
+```
+
+### 4. Valmista ette võtmefailid (configserveri jaoks):
+Loo kaust, mille määrasid CONFIG_KEY_PATH_BASE muutujaga (nt /etc/containerssh/userkeys). Paiguta sinna avalike võtmete failid, mille nimed vastavad kasutajanimedele ja CONFIG_KEY_FILENAME_TEMPLATE mustrile (nt john.pub, jane.pub). Faili sisu peaks olema OpenSSH authorized_keys formaadis võti.
+
+### 5. Kompileeri:
+```
+go build -o auth_configserver_ldap
+```
+### 6. Käivita:
+```
+./auth_configserver_ldap
+```
+### 7. Seadista ContainerSSH:
+Muuda oma containerssh_kubernetes.yaml, et see viitaks sellele ühendatud serverile (kasutades porti, mille määrasid LISTEN_ADDR-is, nt 8888):
+
+```yaml
+    log:
+      level: debug
+    ssh:
+      hostkeys:
+        - /etc/containerssh/host.key
+    #configserver:
+      #url: http://127.0.0.1:8080
+      #timeout: 2s
+    auth:
+      password:
+        method: webhook
+        webhook:
+          url: http://127.0.0.1:8080
+          timeout: 5s
+          authTimeout: 1m0s
+      publicKey:
+        method: "webhook"
+        webhook:
+          url: "http://127.0.0.1:8080"
+          timeout: 2s
+          authTimeout: 1m0s
+```
+### 8. Testi:
+Proovi ühenduda ContainerSSH kaudu, kasutades nii parooli kui ka avalikku võtit (mis eksisteerib LDAP-is sshPublicKey atribuudina). Jälgi ./authconfigsvr logisid ja ContainerSSH logisid. Kontrolli, kas konteinerisse sisse logides on /config sammus määratud avalik võti lisatud ~/.ssh/authorized_keys faili.
+
+### 9. Multi platform Dockerfile image ehitamine
+```
+docker buildx build --builder=container --platform linux/arm64,linux/amd64 -t markosoom/auth_configserver_ldap:0.5 . -f Dockerfile --push
+```
+### 10. Testi ldap toimivust.
+Parool peab olema base64
+```
+echo -n "suvapassakas123"|base64 -w 0
+```
+kui pöördud otse auth_config serveri poole. '.json faile vaata repost
+```
+./auth_configserver_ldap
+```
+```
+curl -s -X POST -d @publickey.json -H 'Content-Type: application/json' localhost:8888/pubkey
+```
+```
+curl -s -X POST -d @user.json -H 'Content-Type: application/json' localhost:8888/password
+```
+```
+curl -s -X POST -d @config.json -H 'Content-Type: application/json' localhost:8888/config
+```
+### 11. Deploy containerssh container
+```
+kubectl apply -f kubernetes.yaml
+```
+### 12. PublicKey autentimine vastu openldap-i.
+Ldap-is peab olema avalik võti. Ldap-i jaoks peab kasutama readonly bind-ingut.
+```
+ssh -i marko marko@192.168.100.232 -p 2222
+```
+### 13. Keelata võtmega logimine.
+Vaata kubernetes.yaml faili ja eemalda public key osa.
+

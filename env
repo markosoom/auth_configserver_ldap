@@ -1,0 +1,15 @@
+export LISTEN_ADDR=":8888"
+export LDAP_HOST="domain.local"
+export LDAP_PORT="636"
+export LDAP_USE_TLS="true"
+export LDAP_SKIP_TLS_VERIFY="true" # AINULT TESTIMISEKS!
+export LDAP_BASE_DN="dc=domain,dc=local"
+export LDAP_USER_DN_TEMPLATE="uid=%s,ou=people,dc=domain,dc=local"
+export LDAP_SEARCH_FILTER_TEMPLATE="(uid=%s)"
+#export LDAP_SSH_PUBLIC_KEY_ATTR="sshPublicKey"
+export LDAP_BIND_DN="cn=readonly,dc=domain,dc=local" # Kui vaja service kontot
+export LDAP_BIND_PASSWORD="service_password"          # Kui vaja service kontot
+export CONFIG_KEY_PATH_BASE="/path/to/your/userkeys" # Kaust, kus asuvad nt kasutaja.pub failid
+export CONFIG_KEY_FILENAME_TEMPLATE="%s.pub"
+export DEFAULT_DOCKER_IMAGE="alpine" # Või muu soovitud image
+export DEFAULT_SHELL_COMMAND="/bin/sh"

@@ -1,0 +1,517 @@
+ssh:
+    listen: 0.0.0.0:2222
+    serverVersion: SSH-2.0-ContainerSSH
+    ciphers:
+        - chacha20-poly1305@openssh.com
+        - aes256-gcm@openssh.com
+        - aes128-gcm@openssh.com
+        - aes256-ctr
+        - aes192-ctr
+        - aes128-ctr
+    kex:
+        - curve25519-sha256@libssh.org
+        - ecdh-sha2-nistp521
+        - ecdh-sha2-nistp384
+        - ecdh-sha2-nistp256
+    macs:
+        - hmac-sha2-256-etm@openssh.com
+        - hmac-sha2-256
+    banner: ""
+    hostkeys:
+        - /etc/containerssh/host.key
+    clientAliveInterval: 0s
+    clientAliveCountMax: 3
+configserver:
+    url: ""
+    allowRedirects: false
+    timeout: 2s
+    cacert: ""
+    cert: ""
+    key: ""
+    tlsVersion: "1.3"
+    curves:
+        - x25519
+        - secp256r1
+        - secp384r1
+        - secp521r1
+    cipher:
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    transmitSensitiveMetadata: false
+auth:
+    password:
+        method: webhook
+        webhook:
+            url: http://127.0.0.1:8080
+            allowRedirects: false
+            timeout: 5s
+            cacert: ""
+            cert: ""
+            key: ""
+            tlsVersion: "1.3"
+            curves:
+                - x25519
+                - secp256r1
+                - secp384r1
+                - secp521r1
+            cipher:
+                - TLS_AES_128_GCM_SHA256
+                - TLS_AES_256_GCM_SHA384
+                - TLS_CHACHA20_POLY1305_SHA256
+                - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            authTimeout: 1m0s
+        kerberos:
+            keytab: /etc/krb5.keytab
+            acceptor: any
+            enforceUsername: true
+            credentialCachePath: /tmp/krb5cc
+            configPath: /etc/containerssh/krb5.conf
+            clockSkew: 5m0s
+    publicKey:
+        method: ""
+        webhook:
+            url: ""
+            allowRedirects: false
+            timeout: 2s
+            cacert: ""
+            cert: ""
+            key: ""
+            tlsVersion: "1.3"
+            curves:
+                - x25519
+                - secp256r1
+                - secp384r1
+                - secp521r1
+            cipher:
+                - TLS_AES_128_GCM_SHA256
+                - TLS_AES_256_GCM_SHA384
+                - TLS_CHACHA20_POLY1305_SHA256
+                - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            authTimeout: 1m0s
+    keyboardInteractive:
+        method: ""
+        oauth2:
+            redirect:
+                listen: 0.0.0.0:8080
+                key: ""
+                cert: ""
+                clientcacert: ""
+                tlsVersion: "1.3"
+                curves:
+                    - x25519
+                    - secp256r1
+                    - secp384r1
+                    - secp521r1
+                cipher:
+                    - TLS_AES_128_GCM_SHA256
+                    - TLS_AES_256_GCM_SHA384
+                    - TLS_CHACHA20_POLY1305_SHA256
+                    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                webroot: ""
+            clientId: ""
+            clientSecret: ""
+            provider: ""
+            github:
+                cacert: ""
+                url: https://github.com
+                apiurl: https://api.github.com
+                cert: ""
+                key: ""
+                tlsVersion: "1.3"
+                curves:
+                    - x25519
+                    - secp256r1
+                    - secp384r1
+                    - secp521r1
+                cipher:
+                    - TLS_AES_128_GCM_SHA256
+                    - TLS_AES_256_GCM_SHA384
+                    - TLS_CHACHA20_POLY1305_SHA256
+                    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                enforceUsername: true
+                requireOrgMembership: ""
+                require2FA: false
+                extraScopes: []
+                enforceScopes: false
+                timeout: 10s
+            oidc:
+                url: ""
+                allowRedirects: false
+                timeout: 2s
+                cacert: ""
+                cert: ""
+                key: ""
+                tlsVersion: "1.3"
+                curves:
+                    - x25519
+                    - secp256r1
+                    - secp384r1
+                    - secp521r1
+                cipher:
+                    - TLS_AES_128_GCM_SHA256
+                    - TLS_AES_256_GCM_SHA384
+                    - TLS_CHACHA20_POLY1305_SHA256
+                    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                deviceFlow: false
+                authorizationCodeFlow: false
+                usernameField: sub
+                redirectURI: ""
+            generic:
+                authorizeEndpointURL: ""
+                tokenEndpoint:
+                    url: ""
+                    allowRedirects: false
+                    timeout: 2s
+                    cacert: ""
+                    cert: ""
+                    key: ""
+                    tlsVersion: "1.3"
+                    curves:
+                        - x25519
+                        - secp256r1
+                        - secp384r1
+                        - secp521r1
+                    cipher:
+                        - TLS_AES_128_GCM_SHA256
+                        - TLS_AES_256_GCM_SHA384
+                        - TLS_CHACHA20_POLY1305_SHA256
+                        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                redirectURI: ""
+            qrCodeClients: []
+            deviceFlowClients: []
+            authTimeout: 2m0s
+    gssapi:
+        method: ""
+        kerberos:
+            keytab: /etc/krb5.keytab
+            acceptor: any
+            enforceUsername: true
+            credentialCachePath: /tmp/krb5cc
+            configPath: /etc/containerssh/krb5.conf
+            clockSkew: 5m0s
+    authz:
+        method: ""
+        webhook:
+            url: ""
+            allowRedirects: false
+            timeout: 2s
+            cacert: ""
+            cert: ""
+            key: ""
+            tlsVersion: "1.3"
+            curves:
+                - x25519
+                - secp256r1
+                - secp384r1
+                - secp521r1
+            cipher:
+                - TLS_AES_128_GCM_SHA256
+                - TLS_AES_256_GCM_SHA384
+                - TLS_CHACHA20_POLY1305_SHA256
+                - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            authTimeout: 1m0s
+    authTimeout: 1m0s
+    url: ""
+    allowRedirects: false
+    timeout: 2s
+    cacert: ""
+    cert: ""
+    key: ""
+    tlsVersion: "1.3"
+    curves:
+        - x25519
+        - secp256r1
+        - secp384r1
+        - secp521r1
+    cipher:
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    pubkey: true
+log:
+    level: debug
+    format: ljson
+    destination: stdout
+    file: /var/log/containerssh/containerssh.log
+    syslog:
+        destination: /dev/log
+        facility: auth
+        tag: ContainerSSH
+        pid: false
+metrics:
+    listen: 0.0.0.0:9100
+    key: ""
+    cert: ""
+    clientcacert: ""
+    tlsVersion: "1.3"
+    curves:
+        - x25519
+        - secp256r1
+        - secp384r1
+        - secp521r1
+    cipher:
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    enable: false
+    path: /metrics
+geoip:
+    provider: dummy
+    maxmind-geoip2-file: /var/lib/GeoIP/GeoIP2-Country.mmdb
+audit:
+    enable: false
+    format: none
+    storage: none
+    file:
+        directory: /var/log/audit
+    s3:
+        local: /var/lib/audit
+        accessKey: ""
+        secretKey: ""
+        bucket: ""
+        region: ""
+        endpoint: ""
+        cacert: ""
+        acl: ""
+        pathStyleAccess: false
+        uploadPartSize: 5242880
+        parallelUploads: 20
+        metadata:
+            ip: false
+            username: false
+    intercept:
+        stdin: false
+        stdout: false
+        stderr: false
+        passwords: false
+        forwarding: false
+health:
+    enable: false
+    listen: 0.0.0.0:7000
+    key: ""
+    cert: ""
+    clientcacert: ""
+    tlsVersion: "1.3"
+    curves:
+        - x25519
+        - secp256r1
+        - secp384r1
+        - secp521r1
+    cipher:
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    client:
+        url: http://127.0.0.1:7000/
+        allowRedirects: false
+        timeout: 2s
+        cacert: ""
+        cert: ""
+        key: ""
+        tlsVersion: "1.3"
+        curves:
+            - x25519
+            - secp256r1
+            - secp384r1
+            - secp521r1
+        cipher:
+            - TLS_AES_128_GCM_SHA256
+            - TLS_AES_256_GCM_SHA384
+            - TLS_CHACHA20_POLY1305_SHA256
+            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+security:
+    defaultMode: ""
+    forceCommand: ""
+    env:
+        mode: ""
+        allow: []
+        deny: []
+    command:
+        mode: ""
+        allow: []
+    shell:
+        mode: ""
+    subsystem:
+        mode: ""
+        allow: []
+        deny: []
+    forwarding:
+        reverseForwardingMode: disable
+        forwardingMode: disable
+        socketForwardingMode: disable
+        socketListenMode: disable
+        x11ForwardingMode: disable
+    tty:
+        mode: ""
+    signal:
+        mode: ""
+        allow: []
+        deny: []
+    maxSessions: -1
+backend: kubernetes
+docker:
+    connection:
+        host: unix:///var/run/docker.sock
+        cacert: ""
+        cert: ""
+        key: ""
+    execution:
+        container:
+            hostname: ""
+            domainname: ""
+            user: ""
+            attachstdin: false
+            attachstdout: false
+            attachstderr: false
+            exposedports: {}
+            tty: false
+            openstdin: false
+            stdinonce: false
+            env: []
+            cmd: []
+            healthcheck: null
+            argsescaped: false
+            image: containerssh/containerssh-guest-image
+            volumes: {}
+            workingdir: ""
+            entrypoint: []
+            networkdisabled: false
+            macaddress: ""
+            onbuild: []
+            labels: {}
+            stopsignal: ""
+            stoptimeout: null
+            shell: []
+        host: null
+        network: null
+        platform: null
+        containername: ""
+        auth: null
+        mode: connection
+        idleCommand:
+            - /usr/bin/containerssh-agent
+            - wait-signal
+            - --signal
+            - INT
+            - --signal
+            - TERM
+        shellCommand:
+            - /bin/bash
+        agentPath: /usr/bin/containerssh-agent
+        disableAgent: false
+        subsystems:
+            sftp: /usr/lib/openssh/sftp-server
+        imagePullPolicy: IfNotPresent
+        exposeAuthMetadataAsEnv: false
+    timeouts:
+        containerStart: 1m0s
+        containerStop: 1m0s
+        commandStart: 1m0s
+        signal: 1m0s
+        window: 1m0s
+        http: 15s
+dockerrun: null
+kubernetes:
+    connection:
+        host: kubernetes.default.svc
+        path: /api
+        username: ""
+        password: ""
+        serverName: ""
+        certFile: ""
+        keyFile: ""
+        cacertFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        cert: ""
+        key: ""
+        cacert: ""
+        bearerToken: ""
+        bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+        qps: 5
+        burst: 10
+    pod:
+        agentPath: /usr/bin/containerssh-agent
+        exposeAuthMetadataAsAnnotations: null
+        exposeAuthMetadataAsEnv: null
+        exposeAuthMetadataAsLabels: null
+        idleCommand:
+            - /usr/bin/containerssh-agent
+            - wait-signal
+            - --signal
+            - INT
+            - --signal
+            - TERM
+        metadata:
+            creationTimestamp: null
+            generateName: containerssh-
+            namespace: containerssh-guests
+        mode: connection
+        shellCommand:
+            - /bin/bash
+        spec:
+            containers:
+                - image: markosoom/containerssh-guest-image_arm64
+                  name: shell
+                  resources: {}
+        subsystems:
+            sftp: /usr/lib/openssh/sftp-server
+    timeouts:
+        podStart: 1m0s
+        podStop: 1m0s
+        commandStart: 1m0s
+        signal: 1m0s
+        window: 1m0s
+        http: 15s
+kuberun: null
+sshproxy:
+    server: ""
+    port: 22
+    usernamePassThrough: false
+    username: ""
+    password: ""
+    privateKey: ""
+    allowedHostKeyFingerprints: []
+    ciphers:
+        - chacha20-poly1305@openssh.com
+        - aes256-gcm@openssh.com
+        - aes128-gcm@openssh.com
+        - aes256-ctr
+        - aes192-ctr
+        - aes128-ctr
+    kex:
+        - curve25519-sha256@libssh.org
+        - ecdh-sha2-nistp521
+        - ecdh-sha2-nistp384
+        - ecdh-sha2-nistp256
+    macs:
+        - hmac-sha2-256-etm@openssh.com
+        - hmac-sha2-256
+    hostKeyAlgos:
+        - ssh-rsa-cert-v01@openssh.com
+        - ssh-dss-cert-v01@openssh.com
+        - ecdsa-sha2-nistp256-cert-v01@openssh.com
+        - ecdsa-sha2-nistp384-cert-v01@openssh.com
+        - ecdsa-sha2-nistp521-cert-v01@openssh.com
+        - ssh-ed25519-cert-v01@openssh.com
+        - ssh-rsa
+        - ssh-dss
+        - ssh-ed25519
+    timeout: 1m0s
+    clientVersion: SSH-2.0-ContainerSSH
+
