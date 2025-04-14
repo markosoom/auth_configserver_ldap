@@ -316,4 +316,4 @@ Ava pull request.
 Vigadest teatamiseks või funktsioonisoovide esitamiseks loo uus Issue.
 
 ### 📜 Litsents
-See projekt on litsentseeritud [MIT, Apache 2.0] litsentsi alusel.
+See projekt on litsentseeritud [Apache 2.0] litsentsi alusel.
