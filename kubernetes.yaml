@@ -174,7 +174,7 @@ spec:
           image: markosoom/auth_configserver_ldap:0.5
           env:
             - name: LDAP_HOST
-              value: "192.168.88.145"
+              value: "ldap_host"
             - name: LDAP_PORT
               value: "636"
             - name: LDAP_USE_TLS
@@ -187,6 +187,10 @@ spec:
               value: "uid=%s,ou=people,dc=domain,dc=local"
             - name: LDAP_SEARCH_FILTER_TEMPLATE
               value: "(uid=%s)"
+            - name: LDAP_BIND_DN
+              value: "uid=readonly,ou=serviceaccounts,dc=domain,dc=local"
+            - name: LDAP_BIND_PASSWORD
+              value: "Testparool"
           securityContext:
             readOnlyRootFilesystem: true
       # Don't allow containers running as root (ContainerSSH doesn't need it)
