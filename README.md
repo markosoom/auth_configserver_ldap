@@ -10,7 +10,6 @@ ContainerSSH käivitab iga SSH-ühenduse jaoks uue konteineri (Kuberneteses, Pod
 * LDAP-põhine parooliautentimine.
 * LDAP-põhine avaliku võtme autentimine (kasutades `sshPublicKey` atribuuti).
 * Dünaamiline kasutajapõhine konteineri konfiguratsioon (nt erinevad Docker image'id: ubuntu, alpine jne).
-* Avaliku võtme automaatne lisamine konteineri `~/.ssh/authorized_keys` faili konfiguratsioonietapis.
 
 ---
 
@@ -51,7 +50,7 @@ ContainerSSH käivitab iga SSH-ühenduse jaoks uue konteineri (Kuberneteses, Pod
 Enne alustamist veendu, et sul on olemas:
 
 * Go (soovitatavalt vastavalt versioonile mis on koodis)
-* Ligipääs OpenLDAP serverile, mis on konfigureeritud vastavalt ootustele (vt [LDAP Struktuur](#ldap-struktuur)).
+* Ligipääs OpenLDAP serverile. Võimalik kasutada anonümuus bind-ikut kui ka read-only user bind-ingut.
 * ContainerSSH paigaldatud ja konfigureeritud (Kubernetes, Docker või Podman).
 * `docker` ja `docker buildx` (kui ehitad Docker imaget).
 * `kubectl` (kui kasutad Kubernetes't).
@@ -73,14 +72,19 @@ Enne alustamist veendu, et sul on olemas:
     ```bash
     go mod tidy
     ```
+    Kompileerimine
     ```bash
     go build -o auth_configserver_ldap .
     ```
 
-
 3. **Keskkonnamuutujad:**
 
-Seadista järgmised keskkonnamuutujad vastavalt oma LDAP ja soovitud serveri konfiguratsioonile
+Seadista järgmised keskkonnamuutujad vastavalt oma LDAP ja soovitud serveri konfiguratsioonile.
+Tekita env fail. Muutujaid saab laadida
+```bash
+source env
+```
+
 ```bash
 # Serveri aadress ja port
 export LISTEN_ADDR=":8888"
@@ -99,10 +103,11 @@ export LDAP_SEARCH_FILTER_TEMPLATE="(uid=%s)" # Mall kasutaja otsimiseks (asenda
 export LDAP_SSH_PUBLIC_KEY_ATTR="sshPublicKey" # Atribuut, kus hoitakse kasutaja avalikke võtmeid
 
 # LDAP Service Account (vajalik, kui anonüümne bind pole lubatud atribuutide lugemiseks)
-export LDAP_BIND_DN="cn=readonly,dc=sinudomeen,dc=com" # Teenuskonto DN
+export LDAP_BIND_DN="uid=readonly,dc=serviceaccount,dc=sinudomeen,dc=com" # Teenuskonto DN
 export LDAP_BIND_PASSWORD="teenuskonto_parool"      # Teenuskonto parool
 
 # --- Konfiguratsiooniserveri Seaded ---
+# See on lisavõimalus, kui ldap publickey-d ei saa ldap serverist hankida.
 # Kaust serveris, kust otsitakse kasutaja avaliku võtme faile (vajalik /config endpointi jaoks)
 export CONFIG_KEY_PATH_BASE="/etc/containerssh/userkeys"
 # Failinime mall kasutaja võtmefaili jaoks (asendab %s kasutajanimega)
@@ -121,19 +126,22 @@ Paiguta sinna kasutajate avalike võtmete failid. Failinimed peavad vastama CONF
 Iga faili sisu peab olema OpenSSH authorized_keys formaadis avalik võti (nt ssh-rsa AAAAB3NzaC1yc2... kasutaja@host).
 Märkus: See samm on vajalik ainult siis, kui soovid, et konfiguratsiooniserver lisaks võtme konteinerisse. Autentimiseks kasutatakse endiselt LDAP-is olevat sshPublicKey atribuuti.
 
-### 🚀 Käivitamine
-1. **Kompileerimine**
-
-
-```bash
-go build -o auth_configserver_ldap main.go
+Avaliku võtme tekitamine:
+```sh
+ssh-keygen -t ed25519 -f kasutajanimi -N ""
 ```
-2. **Serveri käivitamine**
+Avaliku võtmega logimine:
+```sh
+ssh -i kasutajanimi kasutajanimi@containerssh-host -p <port>
+```
+
+### 🚀 Käivitamine
+1. **Serveri käivitamine**
 
 ```bash
 ./auth_configserver_ldap
 ```
-Server hakkab kuulama LISTEN_ADDR muutujaga määratud aadressil ja pordil (nt :8888). Jälgi logisid võimalike vigade osas.
+Server hakkab kuulama LISTEN_ADDR muutujaga (muutujad sai määrata env failiga) määratud aadressil ja pordil (nt :8888). Jälgi logisid võimalike vigade osas.
 
 ### 🔌 ContainerSSH konfigureerimine
 
@@ -175,7 +183,7 @@ Tähtis: Veendu, et ContainerSSH protsessil (nt Pod Kubernetesis) oleks võrguü
 ### 🧪 Testimine
 SSH Ühenduse Testimine
 
-Proovi ühenduda ContainerSSH kaudu, kasutades kasutajanime ja parooli või avalikku võtit, mis on LDAP-is olemas:
+Proovi ühenduda ContainerSSH kaudu, kasutades kasutajanime ja parooli või avalikku võtit, mis on LDAP-is olemas. Parooliga autentimisel keela eelnevalt public võtmega logimine. 
 
 ```bash
 # Parooliga
@@ -188,9 +196,9 @@ ssh -i ~/.ssh/sinu_privaatvõti kasutajanimi@containerssh-host -p <port>
 ```
 Jälgi ./auth_configserver_ldap logisid ja ContainerSSH logisid, et näha autentimis- ja konfiguratsioonipäringuid ning võimalikke vigu. Kui konfigureerisid võtme lisamise, kontrolli konteinerisse sisse logides, kas vastav avalik võti on lisatud ~/.ssh/authorized_keys faili.
 
-Otsene API Testimine (curl)
+Otse API vastu testimine curl käsuga
 
-Saad testida serveri endpointe otse curl käsuga. Selleks on vaja luua JSON-failid päringu kehadega. Repositooriumis peaksid olema näidisfailid (password.json.sample, publickey.json.sample, config.json.sample). Kopeeri need ilma .sample laiendita ja täida oma andmetega.
+Saad testida serveri endpointe otse curl käsuga. Selleks on vaja luua JSON-failid päringu kehadega. Repositooriumis peaksid olema näidisfailid (password.json, publickey.json, config.json).
 
 Valmista ette JSON failid:
 
@@ -246,26 +254,26 @@ Analüüsi vastuseid (nt {"success": true} või konfiguratsiooni JSON).
 
 Komplektis olev Dockerfile võimaldab ehitada serverist Docker image'i. Kasuta docker buildx mitmeplatvormilise image'i ehitamiseks (nt linux/amd64 ja linux/arm64):
 
-Ehita ja lükka registrisse (asenda oma kasutaja/repo nimega)
+Ehita ja lükka registrisse oma docker image (asenda oma kasutaja/repo nimega)
 ```bash
 docker buildx build --builder=container --platform linux/arm64,linux/amd64 \
   -t markosoom/auth_configserver_ldap:latest \
   -t markosoom/auth_configserver_ldap:0.5 \
   . -f Dockerfile --push
 ```
-Asenda markosoom/auth_configserver_ldap oma Docker Hubi (või muu registri) repo nimega.
+
 Asenda :latest ja :0.5 sobivate siltidega.
 --push lipp lükkab image'i pärast ehitamist registrisse.
 
 ### ☸️ Kubernetes Deployment
 
-Kui kasutad ContainerSSH-d Kuberneteses, saad selle webhook-serveri deploy'da eraldi Pod'ina ja Service'ina. Näidiskonfiguratsioon kubernetes.yaml on repositooriumis olemas.
+Kui kasutad ContainerSSH-d kuberneteses, saad selle webhook-serveri deploy'da eraldi Pod'ina ja Service'ina. Näidiskonfiguratsioon kubernetes.yaml on repositooriumis olemas.
 
 Rakenda konfiguratsioon oma klastris:
 ```bash
 kubectl apply -f kubernetes.yaml
 ```
-See loob tavaliselt Deployment-i ja Service-i nimega auth-config-server. Veendu, et ContainerSSH konfiguratsioonis (vt ContainerSSH Konfigureerimine) oleksid webhook URL-id õigesti seadistatud viitama sellele Service'ile (nt http://auth-config-server.default.svc.cluster.local:8888, kui see on default namespace'is).
+See loob tavaliselt Deployment-i ja Service-i nimega auth-config-server. Veendu, et ContainerSSH konfiguratsioonis (vt ContainerSSH konfigureerimine) oleksid webhook URL-id õigesti seadistatud viitama sellele Service'ile (nt http://auth-config-server.default.svc.cluster.local:8888, kui see on default namespace'is).
 
 ### 💡 Täiendavad Märkused
 LDAP Struktuur
@@ -279,13 +287,9 @@ Kui anonüümne otsing pole lubatud, on vaja readonly õigustega LDAP_BIND_DN ja
 Kohanda neid keskkonnamuutujaid vastavalt oma LDAP skeemile.
 
 
-Avaliku võtme lisamine /config sammus konteineri authorized_keys faili on toimiv, kuid mõnevõrra ebatavaline lahendus ContainerSSH jaoks. See muudab konteineri käivitamiskäsku (command või entrypoint), et lisada võti enne tegeliku shelli käivitamist. Alternatiividena võiks kaaluda:
+Avaliku võtme lisamine /config sammus konteineri authorized_keys faili on toimiv, kuid mõnevõrra ebatavaline lahendus ContainerSSH jaoks. See muudab konteineri käivitamiskäsku (command või entrypoint), et lisada võti enne tegeliku shelli käivitamist. 
 
-Võtme käsitlemist autentimise etapis (kui see on juurdepääsuks vajalik).
-Konteineri enda loogikat (nt käivitamisskript, mis laeb võtmed sisselogimisel).
-Praegune lahendus võib olla habras, kui konteineri image'i baaskäsk muutub.
-
-Kui soovid lubada ainult parooliga autentimist ja keelata avaliku võtmega autentimise, eemalda auth.publicKey sektsioon ContainerSSH konfiguratsioonifailist (containerssh.yaml).
+Kui soovid lubada ainult parooliga autentimist ja pead keelata avaliku võtmega autentimise, eemalda auth.publicKey sektsioon ContainerSSH konfiguratsioonifailist (containerssh.yaml).
 
 ```yaml
 auth:
