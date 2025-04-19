@@ -144,75 +144,6 @@ func authenticateUserWithPasswordLDAP(username string, password string) bool {
 	return true
 }
 
-/*
-func handlePasswordAuth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Loe päringu keha logimiseks
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading request body: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	// Pärast lugemist pane keha tagasi, et dekodeerimine saaks toimuda
-	r.Body.Close()                                    // Sulge originaal lugeja
-	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Loo uus lugeja samade baitidega
-
-	// Logi toores keha
-	log.Printf("Received raw /password request body: %s", string(bodyBytes)) // <--- LISA SEE RIDA
-
-	var authReq PasswordAuthRequest
-	// Nüüd dekodeeri (kasutades uut r.Body)
-	if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
-		log.Printf("Error decoding /password request body: %v", err)
-		// Kui dekodeerimine ebaõnnestub, on viga tõenäoliselt logitud toore keha logis
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-	// defer r.Body.Close() // See pole enam siin vajalik, kuna me sulgesime originaali ja uus on NopCloser
-
-	// Logi ka dekodeeritud struktuur, et näha, mis sinna sisse sai
-	log.Printf("Decoded /password request: %+v", authReq) // <--- LISA SEE RIDA
-
-	isAuthenticated := authenticateUserWithPasswordLDAP(authReq.Username, authReq.Password)
-	authResp := AuthResponse{Success: isAuthenticated}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(authResp); err != nil {
-		log.Printf("Error encoding /password response: %v", err)
-	}
-}*/
-
-/*func handlePasswordAuth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var authReq PasswordAuthRequest
-	if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
-		log.Printf("Error decoding /password request body: %v", err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	isAuthenticated := authenticateUserWithPasswordLDAP(authReq.Username, authReq.Password)
-	authResp := AuthResponse{Success: isAuthenticated}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(authResp); err != nil {
-		log.Printf("Error encoding /password response: %v", err)
-	}
-}
-*/
-
 func handlePasswordAuth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -227,8 +158,8 @@ func handlePasswordAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	log.Printf("Received raw /password request body: %s", string(bodyBytes))
+	// Kasuta seda kui soovid teada kas parool on korrektselt sisestatud. (logitakse parool base64 kujul!)
+	//log.Printf("Received raw /password request body: %s", string(bodyBytes))
 
 	var authReq PasswordAuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
@@ -237,7 +168,12 @@ func handlePasswordAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Decoded /password request structure: %+v", authReq)
+	//log.Printf("Decoded /password request structure: %+v", authReq)
+	// Logi ilma paroolita
+	log.Printf("Decoded /password request structure for user %s from %s (ConnID: %s)",
+		authReq.Username,
+		authReq.RemoteAddress,
+		authReq.ConnectionID)
 
 	// --- Base64 Dekodeerimine ---
 	var plainPassword string
@@ -380,37 +316,6 @@ func authenticateUserWithPublicKeyLDAP(username string, clientPublicKeyStr strin
 	return false
 }
 
-/*
-	func handlePublicKeyAuth(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		var authReq PublicKeyAuthRequest
-		if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
-			log.Printf("Error decoding /pubkey request body: %v", err)
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-
-		if authReq.PublicKey.PublicKey == "" {
-			log.Printf("Public key missing in request for user %s", authReq.Username)
-			http.Error(w, "Bad request: publicKey field is missing or empty", http.StatusBadRequest)
-			return
-		}
-
-		isAuthenticated := authenticateUserWithPublicKeyLDAP(authReq.Username, authReq.PublicKey.PublicKey)
-		authResp := AuthResponse{Success: isAuthenticated}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(authResp); err != nil {
-			log.Printf("Error encoding /pubkey response: %v", err)
-		}
-	}
-*/
 func handlePublicKeyAuth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

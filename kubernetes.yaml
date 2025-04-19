@@ -171,7 +171,7 @@ spec:
               readOnly: true
         # Run the auth-config test server for authentication
         - name: containerssh-authconfig
-          image: markosoom/auth_configserver_ldap:0.5
+          image: markosoom/auth_configserver_ldap:0.6
           env:
             - name: LDAP_HOST
               value: "ldap_host"
